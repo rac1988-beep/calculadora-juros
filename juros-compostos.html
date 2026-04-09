@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Juros Compostos — Calculadoras Financeiras</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #f4f6f9;
+      color: #1a1a2e;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+
+    .back {
+      align-self: flex-start;
+      max-width: 720px;
+      width: 100%;
+      margin: 0 auto 1rem;
+    }
+
+    .back a {
+      font-size: 13px;
+      color: #185FA5;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .back a:hover { text-decoration: underline; }
+
+    .container {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      padding: 2rem;
+      width: 100%;
+      max-width: 720px;
+    }
+
+    h1 { font-size: 22px; font-weight: 600; color: #1a1a2e; margin-bottom: 4px; }
+    .subtitle { font-size: 14px; color: #666; margin-bottom: 2rem; }
+
+    .slider-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .slider-label { font-size: 13px; color: #555; min-width: 130px; }
+
+    input[type="range"] {
+      flex: 1; -webkit-appearance: none; height: 4px;
+      border-radius: 2px; background: #dde2ec; outline: none; cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
+      background: #185FA5; cursor: pointer; border: 2px solid #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 18px; height: 18px; border-radius: 50%;
+      background: #185FA5; cursor: pointer; border: 2px solid #fff;
+    }
+
+    .slider-val { font-size: 13px; font-weight: 600; min-width: 80px; text-align: right; color: #185FA5; }
+
+    .divider { border: none; border-top: 1px solid #eee; margin: 1.5rem 0; }
+
+    .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+    @media (max-width: 540px) { .cards { grid-template-columns: repeat(2, 1fr); } }
+
+    .card { background: #f4f6f9; border-radius: 10px; padding: 12px 14px; }
+    .card-label { font-size: 11px; color: #888; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.4px; }
+    .card-val { font-size: 16px; font-weight: 700; color: #1a1a2e; }
+    .card-val.highlight { color: #185FA5; font-size: 18px; }
+
+    .chart-wrap { position: relative; width: 100%; height: 280px; }
+
+    .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; font-size: 12px; color: #666; }
+    .legend span { display: flex; align-items: center; gap: 6px; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+
+    .formula { margin-top: 1.5rem; padding: 12px 16px; background: #f4f6f9; border-radius: 8px; font-size: 13px; color: #555; }
+    .formula code { font-family: 'Courier New', monospace; color: #185FA5; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+  <div class="back"><a href="index.html">← Voltar ao menu</a></div>
+
+  <div class="container">
+    <h1>Juros Compostos</h1>
+    <p class="subtitle">Veja como seu dinheiro cresce com o tempo</p>
+
+    <div class="slider-row">
+      <span class="slider-label">Capital inicial</span>
+      <input type="range" min="0" max="100000" step="1000" value="10000" id="principal">
+      <span class="slider-val" id="principal-out">R$ 10.000</span>
+    </div>
+    <div class="slider-row">
+      <span class="slider-label">Aporte mensal</span>
+      <input type="range" min="0" max="10000" step="100" value="500" id="aporte">
+      <span class="slider-val" id="aporte-out">R$ 500</span>
+    </div>
+    <div class="slider-row">
+      <span class="slider-label">Taxa anual</span>
+      <input type="range" min="1" max="30" step="1" value="10" id="rate">
+      <span class="slider-val" id="rate-out">10%</span>
+    </div>
+    <div class="slider-row">
+      <span class="slider-label">Período</span>
+      <input type="range" min="1" max="40" step="1" value="20" id="years">
+      <span class="slider-val" id="years-out">20 anos</span>
+    </div>
+
+    <hr class="divider">
+
+    <div class="cards">
+      <div class="card"><div class="card-label">Capital inicial</div><div class="card-val" id="c-principal">—</div></div>
+      <div class="card"><div class="card-label">Total aportado</div><div class="card-val" id="c-aportado">—</div></div>
+      <div class="card"><div class="card-label">Juros ganhos</div><div class="card-val" id="c-juros">—</div></div>
+      <div class="card"><div class="card-label">Montante final</div><div class="card-val highlight" id="c-total">—</div></div>
+    </div>
+
+    <div class="chart-wrap">
+      <canvas id="chart" role="img" aria-label="Gráfico de barras mostrando evolução do patrimônio ao longo dos anos"></canvas>
+    </div>
+
+    <div class="legend">
+      <span><span class="legend-dot" style="background:#378ADD;"></span>Capital inicial</span>
+      <span><span class="legend-dot" style="background:#7F77DD;"></span>Aportes mensais</span>
+      <span><span class="legend-dot" style="background:#1D9E75;"></span>Juros compostos</span>
+    </div>
+
+    <div class="formula">
+      <code>M = P×(1+i)ⁿ + A×[(1+i)ⁿ−1]/i</code>
+      &nbsp;·&nbsp; i = taxa mensal equivalente &nbsp;·&nbsp; n = número de meses
+    </div>
+  </div>
+
+  <script>
+    var chartInstance = null;
+    function fmt(v) { return 'R$ ' + Math.round(v).toLocaleString('pt-BR'); }
+    function getInputs() {
+      return {
+        P: parseFloat(document.getElementById('principal').value),
+        A: parseFloat(document.getElementById('aporte').value),
+        r: parseFloat(document.getElementById('rate').value) / 100,
+        n: parseInt(document.getElementById('years').value)
+      };
+    }
+    function calcYear(P, A, mr, year) {
+      var m = year * 12;
+      var total = P * Math.pow(1 + mr, m);
+      total += mr > 0 ? A * (Math.pow(1 + mr, m) - 1) / mr : A * m;
+      return total;
+    }
+    function buildData(P, A, r, n) {
+      var mr = Math.pow(1 + r, 1/12) - 1;
+      var labels = [], cap = [], ap = [], int = [];
+      var step = n > 20 ? 2 : 1;
+      for (var y = 0; y <= n; y += step) {
+        var total = calcYear(P, A, mr, y);
+        var aportado = A * y * 12;
+        labels.push(y === 0 ? 'Início' : 'Ano ' + y);
+        cap.push(Math.round(P));
+        ap.push(Math.round(aportado));
+        int.push(Math.max(0, Math.round(total - P - aportado)));
+      }
+      return { labels, cap, ap, int };
+    }
+    function update() {
+      var { P, A, r, n } = getInputs();
+      var mr = Math.pow(1 + r, 1/12) - 1;
+      var total = calcYear(P, A, mr, n);
+      var aportado = A * n * 12;
+      document.getElementById('principal-out').textContent = fmt(P);
+      document.getElementById('aporte-out').textContent = fmt(A);
+      document.getElementById('rate-out').textContent = Math.round(r * 100) + '%';
+      document.getElementById('years-out').textContent = n + (n === 1 ? ' ano' : ' anos');
+      document.getElementById('c-principal').textContent = fmt(P);
+      document.getElementById('c-aportado').textContent = fmt(aportado);
+      document.getElementById('c-juros').textContent = fmt(total - P - aportado);
+      document.getElementById('c-total').textContent = fmt(total);
+      var d = buildData(P, A, r, n);
+      if (chartInstance) {
+        chartInstance.data.labels = d.labels;
+        chartInstance.data.datasets[0].data = d.cap;
+        chartInstance.data.datasets[1].data = d.ap;
+        chartInstance.data.datasets[2].data = d.int;
+        chartInstance.update();
+      }
+    }
+    window.addEventListener('DOMContentLoaded', function() {
+      var ctx = document.getElementById('chart').getContext('2d');
+      var inp = getInputs();
+      var d = buildData(inp.P, inp.A, inp.r, inp.n);
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: d.labels,
+          datasets: [
+            { label: 'Capital inicial', data: d.cap, backgroundColor: '#378ADD', stack: 'a' },
+            { label: 'Aportes mensais', data: d.ap, backgroundColor: '#7F77DD', stack: 'a' },
+            { label: 'Juros compostos', data: d.int, backgroundColor: '#1D9E75', stack: 'a' }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(c) { return ' ' + c.dataset.label + ': ' + fmt(c.parsed.y); } } } },
+          scales: {
+            x: { stacked: true, ticks: { maxTicksLimit: 12, color: '#888' }, grid: { display: false } },
+            y: { stacked: true, ticks: { color: '#888', callback: function(v) {
+              if (v >= 1000000) return 'R$ ' + (v/1000000).toFixed(1) + 'M';
+              if (v >= 1000) return 'R$ ' + Math.round(v/1000) + 'k';
+              return 'R$ ' + v;
+            }}, grid: { color: 'rgba(0,0,0,0.06)' } }
+          }
+        }
+      });
+      ['principal','aporte','rate','years'].forEach(function(id) {
+        document.getElementById(id).addEventListener('input', update);
+      });
+      update();
+    });
+  </script>
+</body>
+</html>

@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Calculadora de Juros Compostos</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <title>Calculadoras Financeiras</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -14,355 +13,140 @@
       color: #1a1a2e;
       min-height: 100vh;
       display: flex;
-      align-items: flex-start;
+      flex-direction: column;
+      align-items: center;
       justify-content: center;
       padding: 2rem 1rem;
     }
 
-    .container {
-      background: #fff;
-      border-radius: 16px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-      padding: 2rem;
-      width: 100%;
-      max-width: 720px;
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
     }
 
-    h1 {
-      font-size: 22px;
-      font-weight: 600;
+    header h1 {
+      font-size: 28px;
+      font-weight: 700;
       color: #1a1a2e;
-      margin-bottom: 4px;
+      margin-bottom: 8px;
     }
 
-    .subtitle {
-      font-size: 14px;
+    header p {
+      font-size: 15px;
       color: #666;
-      margin-bottom: 2rem;
     }
 
-    .slider-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-
-    .slider-label {
-      font-size: 13px;
-      color: #555;
-      min-width: 130px;
-    }
-
-    input[type="range"] {
-      flex: 1;
-      -webkit-appearance: none;
-      height: 4px;
-      border-radius: 2px;
-      background: #dde2ec;
-      outline: none;
-      cursor: pointer;
-    }
-
-    input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: #185FA5;
-      cursor: pointer;
-      border: 2px solid #fff;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-    }
-
-    input[type="range"]::-moz-range-thumb {
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: #185FA5;
-      cursor: pointer;
-      border: 2px solid #fff;
-    }
-
-    .slider-val {
-      font-size: 13px;
-      font-weight: 600;
-      min-width: 80px;
-      text-align: right;
-      color: #185FA5;
-    }
-
-    .divider {
-      border: none;
-      border-top: 1px solid #eee;
-      margin: 1.5rem 0;
-    }
-
-    .cards {
+    .grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-      margin-bottom: 1.5rem;
-    }
-
-    @media (max-width: 540px) {
-      .cards { grid-template-columns: repeat(2, 1fr); }
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+      width: 100%;
+      max-width: 600px;
     }
 
     .card {
-      background: #f4f6f9;
-      border-radius: 10px;
-      padding: 12px 14px;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+      padding: 2rem 1.5rem;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      border: 2px solid transparent;
+      transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+      cursor: pointer;
     }
 
-    .card-label {
-      font-size: 11px;
-      color: #888;
-      margin-bottom: 5px;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
+    .card:hover {
+      border-color: #185FA5;
+      transform: translateY(-3px);
+      box-shadow: 0 6px 24px rgba(24,95,165,0.12);
     }
 
-    .card-val {
+    .card-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card-icon svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .icon-blue { background: #e6f1fb; }
+    .icon-purple { background: #eeedfe; }
+
+    .card-title {
       font-size: 16px;
-      font-weight: 700;
+      font-weight: 600;
       color: #1a1a2e;
     }
 
-    .card-val.highlight {
+    .card-desc {
+      font-size: 13px;
+      color: #888;
+      line-height: 1.5;
+    }
+
+    .card-arrow {
+      margin-top: auto;
+      font-size: 13px;
+      font-weight: 600;
       color: #185FA5;
-      font-size: 18px;
-    }
-
-    .chart-wrap {
-      position: relative;
-      width: 100%;
-      height: 280px;
-    }
-
-    .legend {
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-      margin-top: 12px;
-      font-size: 12px;
-      color: #666;
-    }
-
-    .legend span {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
     }
 
-    .legend-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 2px;
-      display: inline-block;
-    }
-
-    .formula {
-      margin-top: 1.5rem;
-      padding: 12px 16px;
-      background: #f4f6f9;
-      border-radius: 8px;
-      font-size: 13px;
-      color: #555;
-    }
-
-    .formula code {
-      font-family: 'Courier New', monospace;
-      color: #185FA5;
-      font-weight: 600;
+    footer {
+      margin-top: 3rem;
+      font-size: 12px;
+      color: #aaa;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Calculadora de Juros Compostos</h1>
-    <p class="subtitle">Veja como seu dinheiro cresce com o tempo</p>
 
-    <div class="slider-row">
-      <span class="slider-label">Capital inicial</span>
-      <input type="range" min="0" max="100000" step="1000" value="10000" id="principal">
-      <span class="slider-val" id="principal-out">R$ 10.000</span>
-    </div>
-    <div class="slider-row">
-      <span class="slider-label">Aporte mensal</span>
-      <input type="range" min="0" max="10000" step="100" value="500" id="aporte">
-      <span class="slider-val" id="aporte-out">R$ 500</span>
-    </div>
-    <div class="slider-row">
-      <span class="slider-label">Taxa anual</span>
-      <input type="range" min="1" max="30" step="1" value="10" id="rate">
-      <span class="slider-val" id="rate-out">10%</span>
-    </div>
-    <div class="slider-row">
-      <span class="slider-label">Período</span>
-      <input type="range" min="1" max="40" step="1" value="20" id="years">
-      <span class="slider-val" id="years-out">20 anos</span>
-    </div>
+  <header>
+    <h1>Calculadoras Financeiras</h1>
+    <p>Ferramentas para simular e planejar suas finanças</p>
+  </header>
 
-    <hr class="divider">
+  <div class="grid">
 
-    <div class="cards">
-      <div class="card">
-        <div class="card-label">Capital inicial</div>
-        <div class="card-val" id="c-principal">—</div>
+    <a class="card" href="juros-compostos.html">
+      <div class="card-icon icon-blue">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#185FA5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+          <polyline points="16 7 22 7 22 13"/>
+        </svg>
       </div>
-      <div class="card">
-        <div class="card-label">Total aportado</div>
-        <div class="card-val" id="c-aportado">—</div>
-      </div>
-      <div class="card">
-        <div class="card-label">Juros ganhos</div>
-        <div class="card-val" id="c-juros">—</div>
-      </div>
-      <div class="card">
-        <div class="card-label">Montante final</div>
-        <div class="card-val highlight" id="c-total">—</div>
-      </div>
-    </div>
+      <div class="card-title">Juros Compostos</div>
+      <div class="card-desc">Simule o crescimento do seu capital ao longo do tempo com aportes mensais.</div>
+      <div class="card-arrow">Abrir calculadora →</div>
+    </a>
 
-    <div class="chart-wrap">
-      <canvas id="chart" role="img" aria-label="Gráfico de barras mostrando evolução do patrimônio ao longo dos anos"></canvas>
-    </div>
+    <a class="card" href="emprestimo.html">
+      <div class="card-icon icon-purple">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#534AB7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="5" width="20" height="14" rx="2"/>
+          <line x1="2" y1="10" x2="22" y2="10"/>
+        </svg>
+      </div>
+      <div class="card-title">Empréstimo / Financiamento</div>
+      <div class="card-desc">Calcule parcelas, total de juros e custo real de um empréstimo ou financiamento.</div>
+      <div class="card-arrow">Abrir calculadora →</div>
+    </a>
 
-    <div class="legend">
-      <span><span class="legend-dot" style="background:#378ADD;"></span>Capital inicial</span>
-      <span><span class="legend-dot" style="background:#7F77DD;"></span>Aportes mensais</span>
-      <span><span class="legend-dot" style="background:#1D9E75;"></span>Juros compostos</span>
-    </div>
-
-    <div class="formula">
-      <code>M = P×(1+i)ⁿ + A×[(1+i)ⁿ−1]/i</code>
-      &nbsp;·&nbsp; i = taxa mensal equivalente &nbsp;·&nbsp; n = número de meses
-    </div>
   </div>
 
-  <script>
-    var chartInstance = null;
+  <footer>Calculadoras para fins educativos. Consulte um especialista para decisões financeiras.</footer>
 
-    function fmt(v) {
-      return 'R$ ' + Math.round(v).toLocaleString('pt-BR');
-    }
-
-    function getInputs() {
-      return {
-        P: parseFloat(document.getElementById('principal').value),
-        A: parseFloat(document.getElementById('aporte').value),
-        r: parseFloat(document.getElementById('rate').value) / 100,
-        n: parseInt(document.getElementById('years').value)
-      };
-    }
-
-    function calcYear(P, A, monthlyRate, year) {
-      var months = year * 12;
-      var total = P * Math.pow(1 + monthlyRate, months);
-      if (monthlyRate > 0) {
-        total += A * (Math.pow(1 + monthlyRate, months) - 1) / monthlyRate;
-      } else {
-        total += A * months;
-      }
-      return total;
-    }
-
-    function buildData(P, A, r, n) {
-      var monthlyRate = Math.pow(1 + r, 1 / 12) - 1;
-      var labels = [], capInicial = [], aportes = [], interest = [];
-      var step = n > 20 ? 2 : 1;
-      for (var y = 0; y <= n; y += step) {
-        var total = calcYear(P, A, monthlyRate, y);
-        var totalAportado = A * y * 12;
-        var juros = total - P - totalAportado;
-        labels.push(y === 0 ? 'Início' : 'Ano ' + y);
-        capInicial.push(Math.round(P));
-        aportes.push(Math.round(totalAportado));
-        interest.push(Math.max(0, Math.round(juros)));
-      }
-      return { labels: labels, capInicial: capInicial, aportes: aportes, interest: interest };
-    }
-
-    function update() {
-      var inp = getInputs();
-      var P = inp.P, A = inp.A, r = inp.r, n = inp.n;
-      var monthlyRate = Math.pow(1 + r, 1 / 12) - 1;
-      var total = calcYear(P, A, monthlyRate, n);
-      var totalAportado = A * n * 12;
-      var juros = total - P - totalAportado;
-
-      document.getElementById('principal-out').textContent = fmt(P);
-      document.getElementById('aporte-out').textContent = fmt(A);
-      document.getElementById('rate-out').textContent = Math.round(r * 100) + '%';
-      document.getElementById('years-out').textContent = n + (n === 1 ? ' ano' : ' anos');
-      document.getElementById('c-principal').textContent = fmt(P);
-      document.getElementById('c-aportado').textContent = fmt(totalAportado);
-      document.getElementById('c-juros').textContent = fmt(juros);
-      document.getElementById('c-total').textContent = fmt(total);
-
-      var d = buildData(P, A, r, n);
-      if (chartInstance) {
-        chartInstance.data.labels = d.labels;
-        chartInstance.data.datasets[0].data = d.capInicial;
-        chartInstance.data.datasets[1].data = d.aportes;
-        chartInstance.data.datasets[2].data = d.interest;
-        chartInstance.update();
-      }
-    }
-
-    function initChart() {
-      var inp = getInputs();
-      var d = buildData(inp.P, inp.A, inp.r, inp.n);
-      var ctx = document.getElementById('chart').getContext('2d');
-
-      chartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: d.labels,
-          datasets: [
-            { label: 'Capital inicial', data: d.capInicial, backgroundColor: '#378ADD', stack: 'a' },
-            { label: 'Aportes mensais', data: d.aportes, backgroundColor: '#7F77DD', stack: 'a' },
-            { label: 'Juros compostos', data: d.interest, backgroundColor: '#1D9E75', stack: 'a' }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                label: function(ctx) { return ' ' + ctx.dataset.label + ': ' + fmt(ctx.parsed.y); }
-              }
-            }
-          },
-          scales: {
-            x: { stacked: true, ticks: { maxTicksLimit: 12, color: '#888' }, grid: { display: false } },
-            y: {
-              stacked: true,
-              ticks: {
-                color: '#888',
-                callback: function(v) {
-                  if (v >= 1000000) return 'R$ ' + (v / 1000000).toFixed(1) + 'M';
-                  if (v >= 1000) return 'R$ ' + Math.round(v / 1000) + 'k';
-                  return 'R$ ' + v;
-                }
-              },
-              grid: { color: 'rgba(0,0,0,0.06)' }
-            }
-          }
-        }
-      });
-
-      ['principal', 'aporte', 'rate', 'years'].forEach(function(id) {
-        document.getElementById(id).addEventListener('input', update);
-      });
-
-      update();
-    }
-
-    window.addEventListener('DOMContentLoaded', initChart);
-  </script>
 </body>
 </html>

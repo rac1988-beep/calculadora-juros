@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Empréstimo / Financiamento — Calculadoras Financeiras</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #f4f6f9;
+      color: #1a1a2e;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+
+    .back { align-self: flex-start; max-width: 720px; width: 100%; margin: 0 auto 1rem; }
+    .back a { font-size: 13px; color: #534AB7; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
+    .back a:hover { text-decoration: underline; }
+
+    .container { background: #fff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); padding: 2rem; width: 100%; max-width: 720px; }
+
+    h1 { font-size: 22px; font-weight: 600; color: #1a1a2e; margin-bottom: 4px; }
+    .subtitle { font-size: 14px; color: #666; margin-bottom: 2rem; }
+
+    .slider-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .slider-label { font-size: 13px; color: #555; min-width: 130px; }
+
+    input[type="range"] {
+      flex: 1; -webkit-appearance: none; height: 4px;
+      border-radius: 2px; background: #dde2ec; outline: none; cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
+      background: #534AB7; cursor: pointer; border: 2px solid #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 18px; height: 18px; border-radius: 50%;
+      background: #534AB7; cursor: pointer; border: 2px solid #fff;
+    }
+
+    .slider-val { font-size: 13px; font-weight: 600; min-width: 80px; text-align: right; color: #534AB7; }
+
+    .toggle-row { display: flex; gap: 8px; margin-bottom: 1.5rem; }
+    .toggle-btn {
+      flex: 1; padding: 8px; border: 2px solid #dde2ec; border-radius: 8px;
+      background: #fff; font-size: 13px; font-weight: 600; color: #888;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .toggle-btn.active { border-color: #534AB7; color: #534AB7; background: #eeedfe; }
+
+    .divider { border: none; border-top: 1px solid #eee; margin: 1.5rem 0; }
+
+    .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+    @media (max-width: 480px) { .cards { grid-template-columns: repeat(2, 1fr); } }
+
+    .card { background: #f4f6f9; border-radius: 10px; padding: 12px 14px; }
+    .card-label { font-size: 11px; color: #888; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.4px; }
+    .card-val { font-size: 16px; font-weight: 700; color: #1a1a2e; }
+    .card-val.highlight { color: #534AB7; font-size: 18px; }
+    .card-val.danger { color: #A32D2D; }
+
+    .chart-wrap { position: relative; width: 100%; height: 260px; }
+
+    .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; font-size: 12px; color: #666; }
+    .legend span { display: flex; align-items: center; gap: 6px; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+
+    .info-box { margin-top: 1.5rem; padding: 12px 16px; background: #f4f6f9; border-radius: 8px; font-size: 13px; color: #666; line-height: 1.6; }
+    .info-box strong { color: #1a1a2e; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+  <div class="back"><a href="index.html">← Voltar ao menu</a></div>
+
+  <div class="container">
+    <h1>Empréstimo / Financiamento</h1>
+    <p class="subtitle">Calcule parcelas e o custo total do seu crédito</p>
+
+    <div class="slider-row">
+      <span class="slider-label">Valor do empréstimo</span>
+      <input type="range" min="1000" max="500000" step="1000" value="50000" id="valor">
+      <span class="slider-val" id="valor-out">R$ 50.000</span>
+    </div>
+    <div class="slider-row">
+      <span class="slider-label">Taxa mensal</span>
+      <input type="range" min="0.1" max="10" step="0.1" value="1.5" id="taxa">
+      <span class="slider-val" id="taxa-out">1,5%</span>
+    </div>
+    <div class="slider-row">
+      <span class="slider-label">Prazo</span>
+      <input type="range" min="1" max="360" step="1" value="48" id="prazo">
+      <span class="slider-val" id="prazo-out">48 meses</span>
+    </div>
+
+    <div class="toggle-row">
+      <button class="toggle-btn active" id="btn-price" onclick="setModalidade('price')">Tabela Price</button>
+      <button class="toggle-btn" id="btn-sac" onclick="setModalidade('sac')">SAC</button>
+    </div>
+
+    <hr class="divider">
+
+    <div class="cards">
+      <div class="card"><div class="card-label">Parcela</div><div class="card-val highlight" id="c-parcela">—</div></div>
+      <div class="card"><div class="card-label">Total pago</div><div class="card-val" id="c-total">—</div></div>
+      <div class="card"><div class="card-label">Total de juros</div><div class="card-val danger" id="c-juros">—</div></div>
+    </div>
+
+    <div class="chart-wrap">
+      <canvas id="chart" role="img" aria-label="Gráfico mostrando evolução do saldo devedor e parcelas ao longo do tempo"></canvas>
+    </div>
+
+    <div class="legend">
+      <span><span class="legend-dot" style="background:#7F77DD;"></span>Amortização</span>
+      <span><span class="legend-dot" style="background:#E24B4A;"></span>Juros</span>
+    </div>
+
+    <div class="info-box" id="info-box">
+      <strong>Tabela Price:</strong> parcelas fixas durante todo o período. No início, a maior parte da parcela é juros; no final, é amortização.
+    </div>
+  </div>
+
+  <script>
+    var modalidade = 'price';
+    var chartInstance = null;
+
+    function fmt(v) { return 'R$ ' + Math.round(v).toLocaleString('pt-BR'); }
+    function fmtDec(v) { return 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+    function setModalidade(m) {
+      modalidade = m;
+      document.getElementById('btn-price').classList.toggle('active', m === 'price');
+      document.getElementById('btn-sac').classList.toggle('active', m === 'sac');
+      document.getElementById('info-box').innerHTML = m === 'price'
+        ? '<strong>Tabela Price:</strong> parcelas fixas durante todo o período. No início, a maior parte da parcela é juros; no final, é amortização.'
+        : '<strong>SAC (Sistema de Amortização Constante):</strong> amortização fixa, parcelas decrescentes. Você paga mais no início, mas o total de juros é menor.';
+      update();
+    }
+
+    function getInputs() {
+      return {
+        PV: parseFloat(document.getElementById('valor').value),
+        i: parseFloat(document.getElementById('taxa').value) / 100,
+        n: parseInt(document.getElementById('prazo').value)
+      };
+    }
+
+    function calcPrice(PV, i, n) {
+      var pmt = PV * (i * Math.pow(1+i, n)) / (Math.pow(1+i, n) - 1);
+      var amort = [], juros = [], saldo = PV;
+      for (var k = 0; k < n; k++) {
+        var j = saldo * i;
+        var a = pmt - j;
+        juros.push(j);
+        amort.push(a);
+        saldo -= a;
+      }
+      return { pmt: pmt, amort: amort, juros: juros, total: pmt * n };
+    }
+
+    function calcSAC(PV, i, n) {
+      var a = PV / n;
+      var amort = [], juros = [], pmts = [], saldo = PV;
+      for (var k = 0; k < n; k++) {
+        var j = saldo * i;
+        var pmt = a + j;
+        juros.push(j);
+        amort.push(a);
+        pmts.push(pmt);
+        saldo -= a;
+      }
+      var total = pmts.reduce(function(s, v) { return s + v; }, 0);
+      return { pmt: pmts[0], amort: amort, juros: juros, total: total };
+    }
+
+    function buildChartData(amort, juros, n) {
+      var step = n > 60 ? Math.ceil(n / 30) : 1;
+      var labels = [], am = [], ju = [];
+      for (var k = 0; k < n; k += step) {
+        labels.push('M' + (k + 1));
+        am.push(parseFloat(amort[k].toFixed(2)));
+        ju.push(parseFloat(juros[k].toFixed(2)));
+      }
+      return { labels: labels, am: am, ju: ju };
+    }
+
+    function update() {
+      var { PV, i, n } = getInputs();
+      document.getElementById('valor-out').textContent = fmt(PV);
+      document.getElementById('taxa-out').textContent = (i * 100).toFixed(1).replace('.', ',') + '%';
+      document.getElementById('prazo-out').textContent = n + (n === 1 ? ' mês' : ' meses');
+
+      var res = modalidade === 'price' ? calcPrice(PV, i, n) : calcSAC(PV, i, n);
+      var label = modalidade === 'sac' ? '1ª parcela' : 'Parcela';
+      document.querySelector('.cards .card:first-child .card-label').textContent = label;
+      document.getElementById('c-parcela').textContent = fmtDec(res.pmt);
+      document.getElementById('c-total').textContent = fmt(res.total);
+      document.getElementById('c-juros').textContent = fmt(res.total - PV);
+
+      var d = buildChartData(res.amort, res.juros, n);
+      if (chartInstance) {
+        chartInstance.data.labels = d.labels;
+        chartInstance.data.datasets[0].data = d.am;
+        chartInstance.data.datasets[1].data = d.ju;
+        chartInstance.update();
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', function() {
+      var inp = getInputs();
+      var res = calcPrice(inp.PV, inp.i, inp.n);
+      var d = buildChartData(res.amort, res.juros, inp.n);
+      var ctx = document.getElementById('chart').getContext('2d');
+
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: d.labels,
+          datasets: [
+            { label: 'Amortização', data: d.am, backgroundColor: '#7F77DD', stack: 'a' },
+            { label: 'Juros', data: d.ju, backgroundColor: '#E24B4A', stack: 'a' }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(c) { return ' ' + c.dataset.label + ': ' + fmtDec(c.parsed.y); } } } },
+          scales: {
+            x: { stacked: true, ticks: { maxTicksLimit: 12, color: '#888' }, grid: { display: false } },
+            y: { stacked: true, ticks: { color: '#888', callback: function(v) {
+              if (v >= 1000) return 'R$ ' + Math.round(v/1000) + 'k';
+              return 'R$ ' + v;
+            }}, grid: { color: 'rgba(0,0,0,0.06)' } }
+          }
+        }
+      });
+
+      ['valor','taxa','prazo'].forEach(function(id) {
+        document.getElementById(id).addEventListener('input', update);
+      });
+
+      update();
+    });
+  </script>
+</body>
+</html>
